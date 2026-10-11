@@ -1,21 +1,17 @@
 import type { UpstreamDocument } from '@/lib/parsers/documents.parser'
 
 export const DOCUMENT_CATEGORIES = [
-  { id: 'statements', label: 'Décomptes individuels', pattern: /décomptes? individuel/i },
-  { id: 'assemblies', label: 'Assemblées générales', pattern: /as+embl|\bag\b/i },
-  { id: 'invoices', label: 'Factures', pattern: /factur/i },
-  { id: 'bank', label: 'Extraits bancaires', pattern: /extrait/i },
-  { id: 'accounting', label: 'Comptabilité', pattern: /comptab|impression/i },
-  { id: 'regulations', label: 'Acte de base & règlements', pattern: /acte de base|règlement|codes d'accès/i },
-  { id: 'mail', label: 'Courriers', pattern: /courrier/i },
-  {
-    id: 'works',
-    label: 'Travaux, contrats & rapports',
-    pattern: /travaux|offre|devis|ascenseur|inspection|rapport|certificat|contrat|assurance|photo|etang/i,
-  },
+  { id: 'statements', pattern: /décomptes? individuel/i },
+  { id: 'assemblies', pattern: /as+embl|\bag\b/i },
+  { id: 'invoices', pattern: /factur/i },
+  { id: 'bank', pattern: /extrait/i },
+  { id: 'accounting', pattern: /comptab|impression/i },
+  { id: 'regulations', pattern: /acte de base|règlement|codes d'accès/i },
+  { id: 'mail', pattern: /courrier/i },
+  { id: 'works', pattern: /travaux|offre|devis|ascenseur|inspection|rapport|certificat|contrat|assurance|photo|etang/i },
 ] as const
 
-export const OTHER_CATEGORY = { id: 'other', label: 'Divers' } as const
+export const OTHER_CATEGORY = { id: 'other' } as const
 
 export type DocumentCategoryId = (typeof DOCUMENT_CATEGORIES)[number]['id'] | typeof OTHER_CATEGORY.id
 export type DocumentScope = 'personal' | 'shared'

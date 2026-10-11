@@ -9,21 +9,22 @@ const COPIED_FEEDBACK_MS = 2000
 
 type CopyButtonProps = {
   value: string
-  label: string
+  ariaLabel: string
+  copiedMessage: string
 }
 
-export const CopyButton = ({ value, label }: CopyButtonProps) => {
+export const CopyButton = ({ value, ariaLabel, copiedMessage }: CopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false)
 
   const copy = async () => {
     await navigator.clipboard.writeText(value)
     setIsCopied(true)
-    toast.success(`${label} copié`)
+    toast.success(copiedMessage)
     setTimeout(() => setIsCopied(false), COPIED_FEEDBACK_MS)
   }
 
   return (
-    <Button variant="ghost" size="icon-sm" onClick={copy} aria-label={`Copier ${label.toLowerCase()}`}>
+    <Button variant="ghost" size="icon-sm" onClick={copy} aria-label={ariaLabel}>
       {isCopied ? <CheckIcon /> : <CopyIcon />}
     </Button>
   )

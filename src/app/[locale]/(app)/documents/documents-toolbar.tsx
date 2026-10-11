@@ -6,30 +6,32 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { DOCUMENT_CATEGORIES, OTHER_CATEGORY } from '@/lib/services/document-catalog'
-import { documentsSearchParams, isCategoryId, isScope } from './search-params'
+import type { Dictionary } from '@/lib/i18n/dictionaries'
+import { CATEGORY_IDS, documentsSearchParams, isCategoryId, isScope } from './search-params'
 
 const SEARCH_DEBOUNCE_MS = 300
 const ALL = 'all'
 
-const CATEGORY_ITEMS = [
-  { value: ALL, label: 'Toutes les catégories' },
-  ...[...DOCUMENT_CATEGORIES, OTHER_CATEGORY].map(({ id, label }) => ({ value: id, label })),
-]
-
-const SCOPE_ITEMS = [
-  { value: ALL, label: 'Tous' },
-  { value: 'personal', label: 'Les miens' },
-  { value: 'shared', label: 'Collectifs' },
-] as const
-
 type DocumentsToolbarProps = {
   fiscalYears: string[]
+  labels: Dictionary['documents']
 }
 
-export const DocumentsToolbar = ({ fiscalYears }: DocumentsToolbarProps) => {
+export const DocumentsToolbar = ({ fiscalYears, labels }: DocumentsToolbarProps) => {
   const [filters, setFilters] = useQueryStates(documentsSearchParams, { shallow: false })
-  const yearItems = [{ value: ALL, label: 'Tous les exercices' }, ...fiscalYears.map((year) => ({ value: year, label: year }))]
+  const categoryItems = [
+    { value: ALL, label: labels.allCategories },
+    ...CATEGORY_IDS.map((id) => ({ value: id, label: labels.categories[id] })),
+  ]
+  const yearItems = [
+    { value: ALL, label: labels.allFiscalYears },
+    ...fiscalYears.map((year) => ({ value: year, label: year })),
+  ]
+  const scopeItems = [
+    { value: ALL, label: labels.scopes.all },
+    { value: 'personal', label: labels.scopes.personal },
+    { value: 'shared', label: labels.scopes.shared },
+  ]
   const hasFilters = Boolean(filters.q || filters.category || filters.year || filters.scope)
 
   const updateFilters = (changes: Partial<typeof filters>) => setFilters({ ...changes, page: null, preview: null })
@@ -40,7 +42,7 @@ export const DocumentsToolbar = ({ fiscalYears }: DocumentsToolbarProps) => {
         <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Rechercher un document, une facture, une référence…"
+          placeholder={labels.searchPlaceholder}
           className="pl-8"
           value={filters.q}
           onChange={(event) =>
@@ -49,22 +51,20 @@ export const DocumentsToolbar = ({ fiscalYears }: DocumentsToolbarProps) => {
               { limitUrlUpdates: debounce(SEARCH_DEBOUNCE_MS) },
             )
           }
-          aria-label="Rechercher"
+          aria-label={labels.searchLabel}
         />
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Select
-          items={CATEGORY_ITEMS}
+          items={categoryItems}
           value={filters.category ?? ALL}
-          onValueChange={(value) =>
-            updateFilters({ category: value && isCategoryId(value) ? value : null })
-          }
+          onValueChange={(value) => updateFilters({ category: value && isCategoryId(value) ? value : null })}
         >
-          <SelectTrigger aria-label="Catégorie">
+          <SelectTrigger aria-label={labels.categoryLabel}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {CATEGORY_ITEMS.map(({ value, label }) => (
+            {categoryItems.map(({ value, label }) => (
               <SelectItem key={value} value={value}>
                 {label}
               </SelectItem>
@@ -76,7 +76,7 @@ export const DocumentsToolbar = ({ fiscalYears }: DocumentsToolbarProps) => {
           value={filters.year ?? ALL}
           onValueChange={(value) => updateFilters({ year: value && value !== ALL ? value : null })}
         >
-          <SelectTrigger aria-label="Exercice comptable">
+          <SelectTrigger aria-label={labels.fiscalYearLabel}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -91,12 +91,10 @@ export const DocumentsToolbar = ({ fiscalYears }: DocumentsToolbarProps) => {
           variant="outline"
           spacing={0}
           value={[filters.scope ?? ALL]}
-          onValueChange={([value]) =>
-            updateFilters({ scope: value && isScope(value) ? value : null })
-          }
-          aria-label="Destinataire"
+          onValueChange={([value]) => updateFilters({ scope: value && isScope(value) ? value : null })}
+          aria-label={labels.scopeLabel}
         >
-          {SCOPE_ITEMS.map(({ value, label }) => (
+          {scopeItems.map(({ value, label }) => (
             <ToggleGroupItem key={value} value={value}>
               {label}
             </ToggleGroupItem>
@@ -108,7 +106,7 @@ export const DocumentsToolbar = ({ fiscalYears }: DocumentsToolbarProps) => {
             onClick={() => setFilters({ q: null, category: null, year: null, scope: null, page: null, preview: null })}
           >
             <XIcon data-icon="inline-start" />
-            Réinitialiser
+            {labels.reset}
           </Button>
         )}
       </div>

@@ -6,15 +6,23 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import type { Dictionary } from '@/lib/i18n/dictionaries'
+import type { Locale } from '@/lib/i18n/locales'
 import { loginAction, type LoginState } from './login-action'
 
 const initialState: LoginState = { error: null }
 
-export const LoginForm = () => {
+type LoginFormProps = {
+  locale: Locale
+  labels: Dictionary['login']
+}
+
+export const LoginForm = ({ locale, labels }: LoginFormProps) => {
   const [state, formAction, isPending] = useActionState(loginAction, initialState)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <input type="hidden" name="locale" value={locale} />
       {state.error && (
         <Alert variant="destructive">
           <AlertCircleIcon />
@@ -22,15 +30,15 @@ export const LoginForm = () => {
         </Alert>
       )}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="login">Identifiant</Label>
+        <Label htmlFor="login">{labels.loginLabel}</Label>
         <Input id="login" name="login" autoComplete="username" required />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">Mot de passe</Label>
+        <Label htmlFor="password">{labels.passwordLabel}</Label>
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </div>
       <Button type="submit" disabled={isPending}>
-        {isPending ? 'Connexion…' : 'Se connecter'}
+        {isPending ? labels.submitting : labels.submit}
       </Button>
     </form>
   )
