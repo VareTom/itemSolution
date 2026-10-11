@@ -51,6 +51,26 @@ export const fetchUpstream = async (path: string) => {
   throw new Error(`Too many upstream redirects on ${path}`)
 }
 
+/**
+ * Submits a form to the upstream site with the user's session and returns where upstream redirected to.
+ * Upstream answers a successful submission with a redirect and re-renders the form (HTTP 200) on validation errors.
+ */
+export const submitUpstreamForm = async (path: string, body: URLSearchParams | FormData) => {
+  const cookie = await requireUpstreamCookie()
+  const response = await fetch(upstreamUrl(path), {
+    method: 'POST',
+    headers: { cookie },
+    body,
+    redirect: 'manual',
+    cache: 'no-store',
+  })
+  const location = response.headers.get('location')
+
+  if (isLoginRedirect(location)) return redirectToLogout()
+  if (!isRedirect(response.status)) throw new UpstreamRequestError(response.status, path)
+  return location ?? ''
+}
+
 export const fetchUpstreamHtml = cache(async (path: string) => {
   const response = await fetchUpstream(path)
   const html = await response.text()

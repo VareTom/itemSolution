@@ -14,6 +14,9 @@ const PAGES = {
   'documents-list': '/docs',
   'documents-list-page-2': '/docs/index/page:2',
   'documents-folders': '/docs/ilist',
+  'assemblies-index': '/assemblies/',
+  'tickets-index': '/tickets/index',
+  'tickets-add': '/tickets/add',
 }
 
 const setEcho = (enabled: boolean) => spawnSync('stty', [enabled ? 'echo' : '-echo'], { stdio: 'inherit' })
@@ -99,6 +102,35 @@ if (personalDocumentId) {
   console.info(
     `document-file: HTTP ${file.status}, ${file.headers.get('content-type')}, ${file.headers.get('content-disposition')}, ${file.headers.get('content-length')} bytes`,
   )
+}
+
+const capture = async (name: string, path: string) => {
+  const response = await request(path)
+  const html = await response.text()
+  await writeFile(`${OUTPUT_DIR}/${name}.html`, html)
+  console.info(`${name}: HTTP ${response.status}, ${html.length} chars`)
+  return html
+}
+
+const assembliesIndex = await Bun.file(`${OUTPUT_DIR}/assemblies-index.html`).text()
+const assemblyIds = [...new Set([...assembliesIndex.matchAll(/\/assemblies\/view\/(\d+)/g)].map(([, id]) => id))].slice(0, 2)
+for (const [index, assemblyId] of assemblyIds.entries()) {
+  const assemblyView = await capture(`assembly-view-${index}`, `/assemblies/view/${assemblyId}`)
+  await capture(`assembly-documents-${index}`, `/docs/ajax_assembly/${assemblyId}.json`)
+  const resolutionPath = assemblyView.match(/\/aresolutions\/view\/\d+\?assembly=\d+/)?.[0]
+  if (resolutionPath) await capture(`resolution-view-${index}`, resolutionPath)
+}
+
+const ticketsIndex = await Bun.file(`${OUTPUT_DIR}/tickets-index.html`).text()
+const ticketIds = [...new Set([...ticketsIndex.matchAll(/TIS(\d+)/g)].map(([, id]) => id))].slice(0, 2)
+for (const [index, ticketId] of ticketIds.entries()) {
+  await capture(`ticket-view-${index}`, `/tickets/view/${ticketId}`)
+}
+
+if (personalDocumentId) {
+  const preview = await request(`/docs/preview/${personalDocumentId}`)
+  const bytes = (await preview.arrayBuffer()).byteLength
+  console.info(`document-preview: HTTP ${preview.status}, ${preview.headers.get('content-type')}, ${bytes} bytes`)
 }
 
 await request('/users/logout')
