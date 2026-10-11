@@ -14,14 +14,17 @@ export const getFinanceOverview = async () => {
   ])
   const myAccounts = parseMyAccounts(financialsIndex)
   const ledgers = await Promise.all(
-    myAccounts.accounts.map(async ({ id }) => parseAccountLedger(await fetchUpstreamHtml(`/financials/view_account/${id}`))),
+    myAccounts.accounts.map(async ({ id }) => ({
+      accountId: id,
+      ledger: parseAccountLedger(await fetchUpstreamHtml(`/financials/view_account/${id}`)),
+    })),
   )
 
   return buildFinanceOverview({
     myAccounts,
     workingCapitalLines: parseOwnerBalance(workingCapitalHtml),
     reserveLines: parseOwnerBalance(reserveHtml),
-    ledgerEntries: ledgers.flatMap((ledger) => ledger.entries),
+    ledgers,
   })
 }
 

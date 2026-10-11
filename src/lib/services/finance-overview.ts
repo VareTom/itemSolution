@@ -1,4 +1,4 @@
-import type { LedgerEntry } from '@/lib/parsers/account-ledger.parser'
+import type { AccountLedger, LedgerEntry } from '@/lib/parsers/account-ledger.parser'
 import type { MyAccounts } from '@/lib/parsers/my-accounts.parser'
 import type { OwnerBalanceLine } from '@/lib/parsers/owner-balance.parser'
 
@@ -11,6 +11,14 @@ export type FundSummary = {
   balance: number
 }
 
+export type AccountSummary = {
+  id: string
+  code: string
+  units: AccountLedger['units']
+  workingCapitalBalance: number
+  reserveBalance: number
+}
+
 export type FinanceOverview = {
   asOf: string
   totalBalance: number
@@ -18,7 +26,7 @@ export type FinanceOverview = {
   workingCapital: FundSummary
   reserve: FundSummary
   paymentReference: string | null
-  accounts: { id: string; code: string; balance: number }[]
+  accounts: AccountSummary[]
   entries: (LedgerEntry & { kind: 'charge' | 'payment' })[]
 }
 
@@ -26,7 +34,7 @@ type BuildFinanceOverviewInput = {
   myAccounts: MyAccounts
   workingCapitalLines: OwnerBalanceLine[]
   reserveLines: OwnerBalanceLine[]
-  ledgerEntries: LedgerEntry[]
+  ledgers: { accountId: string; ledger: AccountLedger }[]
 }
 
 const roundCents = (amount: number) => Math.round(amount * CENTS) / CENTS
@@ -39,6 +47,9 @@ const summarizeFund = (lines: OwnerBalanceLine[], accountIds: Set<string>): Fund
     balance: roundCents(ownLines.reduce((sum, line) => sum + line.balance, 0)),
   }
 }
+
+const balanceOf = (lines: OwnerBalanceLine[], accountId: string) =>
+  lines.find((line) => line.accountId === accountId)?.balance ?? 0
 
 /**
  * Picks the structured communication the owner uses most often in their payment labels
@@ -57,12 +68,13 @@ export const buildFinanceOverview = ({
   myAccounts,
   workingCapitalLines,
   reserveLines,
-  ledgerEntries,
+  ledgers,
 }: BuildFinanceOverviewInput): FinanceOverview => {
   const accountIds = new Set(myAccounts.accounts.map((account) => account.id))
   const workingCapital = summarizeFund(workingCapitalLines, accountIds)
   const reserve = summarizeFund(reserveLines, accountIds)
   const totalBalance = roundCents(workingCapital.balance + reserve.balance)
+  const ledgerEntries = ledgers.flatMap(({ ledger }) => ledger.entries)
 
   return {
     asOf: myAccounts.asOf,
@@ -71,10 +83,16 @@ export const buildFinanceOverview = ({
     workingCapital,
     reserve,
     paymentReference: findPaymentReference(ledgerEntries),
-    accounts: myAccounts.accounts.map(({ id, code, balance }) => ({ id, code, balance })),
-    entries: ledgerEntries
+    accounts: myAccounts.accounts.map(({ id, code }) => ({
+      id,
+      code,
+      units: ledgers.find(({ accountId }) => accountId === id)?.ledger.units ?? [],
+      workingCapitalBalance: balanceOf(workingCapitalLines, id),
+      reserveBalance: balanceOf(reserveLines, id),
+    })),
+    entries: ledgers
+      .flatMap(({ ledger }) => ledger.entries.toReversed())
       .map((entry) => ({ ...entry, kind: entry.amount < 0 ? ('payment' as const) : ('charge' as const) }))
-      .toReversed()
       .toSorted((a, b) => b.date.localeCompare(a.date)),
   }
 }

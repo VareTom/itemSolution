@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { LedgerEntry } from '@/lib/parsers/account-ledger.parser'
+import type { AccountLedger, LedgerEntry } from '@/lib/parsers/account-ledger.parser'
 import { buildFinanceOverview, findPaymentReference } from './finance-overview'
 
 const MY_ACCOUNTS = {
@@ -28,13 +28,18 @@ const entry = (date: string, label: string, amount: number): LedgerEntry => ({
   documentReference: null,
 })
 
+const ledgerFor = (accountId: string, entries: LedgerEntry[], units: AccountLedger['units'] = []) => ({
+  accountId,
+  ledger: { holder: 'DUPONT', units, entries },
+})
+
 describe('buildFinanceOverview', () => {
   it('should sum the owner accounts per fund and ignore other owners when the owner has several accounts', () => {
     const overview = buildFinanceOverview({
       myAccounts: MY_ACCOUNTS,
       workingCapitalLines: [balanceLine('account-1', 300, 100), balanceLine('account-2', 100, 50), balanceLine('account-9', 999, 0)],
       reserveLines: [balanceLine('account-2', 10, 30)],
-      ledgerEntries: [],
+      ledgers: [],
     })
 
     expect(overview.workingCapital).toEqual({ debit: 400, credit: 150, balance: 250 })
@@ -48,7 +53,7 @@ describe('buildFinanceOverview', () => {
       myAccounts: MY_ACCOUNTS,
       workingCapitalLines: [balanceLine('account-1', 100, 150)],
       reserveLines: [balanceLine('account-9', 10, 0)],
-      ledgerEntries: [],
+      ledgers: [],
     })
 
     expect(overview.reserve).toEqual({ debit: 0, credit: 0, balance: 0 })
@@ -61,7 +66,7 @@ describe('buildFinanceOverview', () => {
       myAccounts: MY_ACCOUNTS,
       workingCapitalLines: [],
       reserveLines: [],
-      ledgerEntries: [entry('2026-07-01', 'Appel', 294.75), entry('2026-07-26', 'Paiement', -294.75)],
+      ledgers: [ledgerFor('account-1', [entry('2026-07-01', 'Appel', 294.75), entry('2026-07-26', 'Paiement', -294.75)])],
     })
 
     expect(overview.entries.map(({ date, kind }) => ({ date, kind }))).toEqual([
@@ -70,12 +75,41 @@ describe('buildFinanceOverview', () => {
     ])
   })
 
+  it('should detail each account with its units and fund balances when the owner has several accounts', () => {
+    const overview = buildFinanceOverview({
+      myAccounts: MY_ACCOUNTS,
+      workingCapitalLines: [balanceLine('account-1', 300, 100), balanceLine('account-2', 100, 50)],
+      reserveLines: [balanceLine('account-2', 10, 30)],
+      ledgers: [
+        ledgerFor('account-1', [], [{ reference: '06.', type: 'appartement' }]),
+        ledgerFor('account-2', [], [{ reference: '6.P', type: 'parking intérieur' }]),
+      ],
+    })
+
+    expect(overview.accounts).toEqual([
+      {
+        id: 'account-1',
+        code: '400DUP-625',
+        units: [{ reference: '06.', type: 'appartement' }],
+        workingCapitalBalance: 200,
+        reserveBalance: 0,
+      },
+      {
+        id: 'account-2',
+        code: '400DUP-626',
+        units: [{ reference: '6.P', type: 'parking intérieur' }],
+        workingCapitalBalance: 50,
+        reserveBalance: -20,
+      },
+    ])
+  })
+
   it('should keep the latest operation first when several operations share the same date', () => {
     const overview = buildFinanceOverview({
       myAccounts: MY_ACCOUNTS,
       workingCapitalLines: [],
       reserveLines: [],
-      ledgerEntries: [entry('2025-07-01', 'Appel', 314.89), entry('2025-07-01', 'Report', -162.02), entry('2025-07-07', 'Paiement', -314.89)],
+      ledgers: [ledgerFor('account-1', [entry('2025-07-01', 'Appel', 314.89), entry('2025-07-01', 'Report', -162.02), entry('2025-07-07', 'Paiement', -314.89)])],
     })
 
     expect(overview.entries.map(({ label }) => label)).toEqual(['Paiement', 'Report', 'Appel'])

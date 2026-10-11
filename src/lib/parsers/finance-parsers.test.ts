@@ -64,7 +64,10 @@ describe('parseAccountLedger', () => {
   it('should return the holder, units and entries without the total row when the ledger is rendered', () => {
     expect(parseAccountLedger(LEDGER_HTML)).toEqual({
       holder: 'DUPONT Alice',
-      units: ['ACP/06. (appartement)', 'ACP/6.P (parking intérieur)'],
+      units: [
+        { reference: '06.', type: 'appartement' },
+        { reference: '6.P', type: 'parking intérieur' },
+      ],
       entries: [
         {
           date: '2026-07-01',

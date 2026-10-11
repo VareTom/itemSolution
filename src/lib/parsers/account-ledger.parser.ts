@@ -2,9 +2,17 @@ import { load } from 'cheerio'
 import { z } from 'zod'
 import { cleanText, parseAmount, parseBelgianDate } from './parse-values'
 
+const UNIT_PATTERN = /^(?:[^/]+\/)?(.+?)\s*(?:\((.+)\))?$/
+
+/** Splits "ACPMONDRIAN/06. (appartement)" into its unit reference ("06.") and type ("appartement"). */
+const parseUnit = (raw: string) => {
+  const [, reference, type] = raw.match(UNIT_PATTERN) ?? [raw, raw]
+  return { reference, type: type ?? null }
+}
+
 const accountLedgerSchema = z.object({
   holder: z.string().min(1),
-  units: z.array(z.string().min(1)),
+  units: z.array(z.object({ reference: z.string().min(1), type: z.string().nullable() })),
   entries: z.array(
     z.object({
       date: z.iso.date(),
@@ -34,6 +42,7 @@ export const parseAccountLedger = (html: string): AccountLedger => {
     .map((_, node) => cleanText($(node).text()))
     .get()
     .filter(Boolean)
+    .map(parseUnit)
 
   const entries = block
     .find('tbody tr:not(.item-last)')
