@@ -1,0 +1,2 @@
+export const MAX_TICKET_TITLE_LENGTH = 200
+export const MAX_TICKET_MESSAGE_LENGTH = 10_000

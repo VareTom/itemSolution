@@ -1,9 +1,9 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { Suspense, type ComponentType, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileTextIcon, LogOutIcon, WalletIcon } from 'lucide-react'
+import { FileTextIcon, LandmarkIcon, LogOutIcon, MessagesSquareIcon, WalletIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -25,11 +25,41 @@ type AppSidebarProps = {
   localeSwitcher: ReactNode
 }
 
+type NavigationItem = {
+  href: string
+  label: string
+  icon: ComponentType
+}
+
+type NavigationMenuProps = {
+  items: NavigationItem[]
+  pathname: string | null
+}
+
+const NavigationMenu = ({ items, pathname }: NavigationMenuProps) => (
+  <SidebarMenu>
+    {items.map(({ href, label, icon: Icon }) => (
+      <SidebarMenuItem key={href}>
+        <SidebarMenuButton isActive={pathname?.startsWith(href) ?? false} render={<Link href={href} />}>
+          <Icon />
+          <span>{label}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ))}
+  </SidebarMenu>
+)
+
+/** Reads the current path, which is only known at request time on dynamic routes. */
+const ActiveNavigationMenu = ({ items }: { items: NavigationItem[] }) => (
+  <NavigationMenu items={items} pathname={usePathname()} />
+)
+
 export const AppSidebar = ({ locale, labels, residenceName, localeSwitcher }: AppSidebarProps) => {
-  const pathname = usePathname()
   const navigation = [
     { href: `/${locale}/finances`, label: labels.finances, icon: WalletIcon },
     { href: `/${locale}/documents`, label: labels.documents, icon: FileTextIcon },
+    { href: `/${locale}/tickets`, label: labels.tickets, icon: MessagesSquareIcon },
+    { href: `/${locale}/assemblies`, label: labels.assemblies, icon: LandmarkIcon },
   ]
 
   return (
@@ -43,16 +73,9 @@ export const AppSidebar = ({ locale, labels, residenceName, localeSwitcher }: Ap
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map(({ href, label, icon: Icon }) => (
-                <SidebarMenuItem key={href}>
-                  <SidebarMenuButton isActive={pathname.startsWith(href)} render={<Link href={href} />}>
-                    <Icon />
-                    <span>{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <Suspense fallback={<NavigationMenu items={navigation} pathname={null} />}>
+              <ActiveNavigationMenu items={navigation} />
+            </Suspense>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
