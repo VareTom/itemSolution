@@ -27,7 +27,7 @@ export const LedgerTable = async ({ entries }: LedgerTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{labels.date}</TableHead>
+              <TableHead className="hidden sm:table-cell">{labels.date}</TableHead>
               <TableHead>{labels.operation}</TableHead>
               <TableHead className="text-right">{labels.amount}</TableHead>
               <TableHead className="hidden text-right sm:table-cell">{labels.balance}</TableHead>
@@ -39,13 +39,14 @@ export const LedgerTable = async ({ entries }: LedgerTableProps) => {
           <TableBody>
             {entries.map((entry, index) => (
               <TableRow key={`${entry.date}-${index}`}>
-                <TableCell className="tabular-nums text-muted-foreground">{format.shortDate(entry.date)}</TableCell>
+                <TableCell className="hidden tabular-nums text-muted-foreground sm:table-cell">{format.shortDate(entry.date)}</TableCell>
                 <TableCell className="max-w-64 whitespace-normal">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={entry.kind === 'payment' ? 'secondary' : 'outline'}>
                       {entry.kind === 'payment' ? labels.payment : labels.charge}
                     </Badge>
                     <span>{entry.label}</span>
+                    <span className="w-full text-xs text-muted-foreground tabular-nums sm:hidden">{format.shortDate(entry.date)}</span>
                   </div>
                 </TableCell>
                 <TableCell

@@ -35,7 +35,7 @@ export const DocumentsTable = async ({ documents, previewHref }: DocumentsTableP
             <TableHead>{labels.columns.document}</TableHead>
             <TableHead className="hidden md:table-cell">{labels.columns.category}</TableHead>
             <TableHead className="hidden lg:table-cell">{labels.columns.fiscalYear}</TableHead>
-            <TableHead>{labels.columns.date}</TableHead>
+            <TableHead className="hidden sm:table-cell">{labels.columns.date}</TableHead>
             <TableHead className="hidden text-right sm:table-cell">{labels.columns.size}</TableHead>
             <TableHead className="w-10">
               <span className="sr-only">{t.common.download}</span>
@@ -52,6 +52,7 @@ export const DocumentsTable = async ({ documents, previewHref }: DocumentsTableP
                     <span className="font-medium group-hover:underline">{document.title}</span>
                     <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                       {document.reference}
+                      <span className="tabular-nums sm:hidden">· {format.shortDate(document.date)}</span>
                       {document.scope === 'personal' && <Badge variant="secondary">{labels.personal}</Badge>}
                     </span>
                   </span>
@@ -61,7 +62,7 @@ export const DocumentsTable = async ({ documents, previewHref }: DocumentsTableP
                 <Badge variant="outline">{labels.categories[document.categoryId]}</Badge>
               </TableCell>
               <TableCell className="hidden text-muted-foreground lg:table-cell">{document.fiscalYear ?? '—'}</TableCell>
-              <TableCell className="tabular-nums text-muted-foreground">{format.shortDate(document.date)}</TableCell>
+              <TableCell className="hidden tabular-nums text-muted-foreground sm:table-cell">{format.shortDate(document.date)}</TableCell>
               <TableCell className="hidden text-right tabular-nums text-muted-foreground sm:table-cell">
                 {format.fileSize(document.sizeBytes)}
               </TableCell>

@@ -47,6 +47,7 @@ const DocumentsPage = async ({ searchParams }: PageProps<'/[locale]/documents'>)
         locale={locale}
         labels={t.documents.preview}
         downloadLabel={t.common.download}
+        openLabel={t.common.open}
       />
     </>
   )
