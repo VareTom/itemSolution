@@ -1,15 +1,10 @@
 import type { TicketStatus, TicketSummary } from '@/lib/parsers/tickets.parser'
+import { matchesSearch } from '@/lib/search'
 
 export const TICKET_FILTERS = ['all', 'open', 'closed'] as const
 export type TicketFilter = (typeof TICKET_FILTERS)[number]
 
 const CLOSED_STATUSES = new Set<TicketStatus>(['done', 'cancelled'])
-
-const normalizeForSearch = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
 
 const matchesFilter = (ticket: TicketSummary, filter: TicketFilter) => {
   if (filter === 'all') return true
@@ -17,11 +12,8 @@ const matchesFilter = (ticket: TicketSummary, filter: TicketFilter) => {
   return filter === 'closed' ? isClosed : !isClosed
 }
 
-const matchesQuery = (ticket: TicketSummary, query: string) => {
-  const terms = normalizeForSearch(query).split(/\s+/).filter(Boolean)
-  const haystack = normalizeForSearch(`${ticket.title} ${ticket.reference} ${ticket.author} ${ticket.folder ?? ''}`)
-  return terms.every((term) => haystack.includes(term))
-}
+const matchesQuery = (ticket: TicketSummary, query: string) =>
+  matchesSearch(query, `${ticket.title} ${ticket.reference} ${ticket.author} ${ticket.folder ?? ''}`)
 
 type FilterTicketsInput = {
   tickets: TicketSummary[]

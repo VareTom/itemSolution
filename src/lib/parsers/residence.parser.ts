@@ -23,3 +23,21 @@ export const parseResidence = (html: string): Residence => {
     addressLines,
   })
 }
+
+const residenceContactSchema = z.object({
+  email: z.email().nullable(),
+  companyNumber: z.string().nullable(),
+})
+
+export type ResidenceContact = z.infer<typeof residenceContactSchema>
+
+/** Reads the e-mail address and company number (BCE) from the "Info ACP" block of the upstream home page. */
+export const parseResidenceContact = (html: string): ResidenceContact => {
+  const $ = load(html)
+  const text = cleanText($('#block-infos .infos-condo').first().text())
+
+  return residenceContactSchema.parse({
+    email: text.match(/Email\s*:\s*(\S+@\S+)/i)?.[1] ?? null,
+    companyNumber: text.match(/BCE\s*:\s*([\d.]+\d)/)?.[1] ?? null,
+  })
+}

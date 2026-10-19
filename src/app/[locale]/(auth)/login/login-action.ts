@@ -36,5 +36,5 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
     return { error: errors.unavailable }
   }
 
-  redirect(`/${locale}/finances`)
+  redirect(`/${locale}`)
 }
