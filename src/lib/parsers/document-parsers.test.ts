@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { parseDocuments } from './documents.parser'
-import { parseResidence } from './residence.parser'
+import { parseResidence, parseResidenceContact } from './residence.parser'
 
 const DOCUMENTS_HTML = `
 <div class="doc-ilist-container">
@@ -63,5 +63,26 @@ describe('parseResidence', () => {
       name: 'ACP EXEMPLE (0001)',
       addressLines: ['Rue Exemple, 1', '7000 MONS'],
     })
+  })
+})
+
+const INFO_HTML = `
+<div id="block-infos" class="block-view bg-gradient">
+  <div class="infos-condo">
+    <!-- Nb lots principaux : 77 <br/> -->
+    Email : acp@example.com <br/>
+    IBAN : BE37 0019 0679 0028 <br/>
+    BIC : GEBABEBB <br/>
+    N° BCE : 748.518.316 <br/>
+  </div>
+</div>`
+
+describe('parseResidenceContact', () => {
+  it('should return the e-mail and company number when the info block lists them', () => {
+    expect(parseResidenceContact(INFO_HTML)).toEqual({ email: 'acp@example.com', companyNumber: '748.518.316' })
+  })
+
+  it('should return null values when the info block is missing', () => {
+    expect(parseResidenceContact('<div></div>')).toEqual({ email: null, companyNumber: null })
   })
 })

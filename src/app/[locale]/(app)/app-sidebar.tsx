@@ -3,7 +3,7 @@
 import { Suspense, type ComponentType, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileTextIcon, LandmarkIcon, LogOutIcon, MessagesSquareIcon, WalletIcon } from 'lucide-react'
+import { BookUserIcon, FileTextIcon, HouseIcon, LandmarkIcon, LayoutGridIcon, LogOutIcon, MessagesSquareIcon, WalletIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +29,7 @@ type NavigationItem = {
   href: string
   label: string
   icon: ComponentType
+  exact?: boolean
 }
 
 type NavigationMenuProps = {
@@ -38,9 +39,12 @@ type NavigationMenuProps = {
 
 const NavigationMenu = ({ items, pathname }: NavigationMenuProps) => (
   <SidebarMenu>
-    {items.map(({ href, label, icon: Icon }) => (
+    {items.map(({ href, label, icon: Icon, exact = false }) => (
       <SidebarMenuItem key={href}>
-        <SidebarMenuButton isActive={pathname?.startsWith(href) ?? false} render={<Link href={href} />}>
+        <SidebarMenuButton
+          isActive={(exact ? pathname === href : pathname?.startsWith(href)) ?? false}
+          render={<Link href={href} />}
+        >
           <Icon />
           <span>{label}</span>
         </SidebarMenuButton>
@@ -56,10 +60,13 @@ const ActiveNavigationMenu = ({ items }: { items: NavigationItem[] }) => (
 
 export const AppSidebar = ({ locale, labels, residenceName, localeSwitcher }: AppSidebarProps) => {
   const navigation = [
+    { href: `/${locale}`, label: labels.home, icon: HouseIcon, exact: true },
     { href: `/${locale}/finances`, label: labels.finances, icon: WalletIcon },
     { href: `/${locale}/documents`, label: labels.documents, icon: FileTextIcon },
     { href: `/${locale}/tickets`, label: labels.tickets, icon: MessagesSquareIcon },
     { href: `/${locale}/assemblies`, label: labels.assemblies, icon: LandmarkIcon },
+    { href: `/${locale}/directory`, label: labels.directory, icon: BookUserIcon },
+    { href: `/${locale}/registry`, label: labels.registry, icon: LayoutGridIcon },
   ]
 
   return (

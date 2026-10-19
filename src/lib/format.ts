@@ -25,9 +25,14 @@ export const createFormatters = (locale: Locale) => {
   })
   const kilobytes = new Intl.NumberFormat(intlLocale, { style: 'unit', unit: 'kilobyte', maximumFractionDigits: 0 })
   const megabytes = new Intl.NumberFormat(intlLocale, { style: 'unit', unit: 'megabyte', maximumFractionDigits: 1 })
+  const integer = new Intl.NumberFormat(intlLocale, { maximumFractionDigits: 0 })
+  const percent = new Intl.NumberFormat(intlLocale, { style: 'percent', maximumFractionDigits: 2 })
 
   return {
     euro: (amount: number) => euro.format(amount),
+    integer: (value: number) => integer.format(value),
+    /** Formats a ratio (0.0125) as "1,25 %". */
+    percent: (ratio: number) => percent.format(ratio),
     /** Formats an ISO date ("2026-10-05", time ignored) as "5 octobre 2026". */
     date: (isoDate: string) => longDate.format(toUtcWallTime(isoDate.slice(0, ISO_DATE_LENGTH))),
     shortDate: (isoDate: string) => shortDate.format(toUtcWallTime(isoDate.slice(0, ISO_DATE_LENGTH))),
