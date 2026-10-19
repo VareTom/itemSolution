@@ -1,4 +1,5 @@
 import type { UpstreamDocument } from '@/lib/parsers/documents.parser'
+import { matchesSearch } from '@/lib/search'
 
 export const DOCUMENT_CATEGORIES = [
   { id: 'statements', pattern: /décomptes? individuel/i },
@@ -50,17 +51,8 @@ export type DocumentFilters = {
   pageSize: number
 }
 
-const normalizeForSearch = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-
-const matchesQuery = (document: CatalogDocument, query: string) => {
-  const terms = normalizeForSearch(query).split(/\s+/).filter(Boolean)
-  const haystack = normalizeForSearch(`${document.title} ${document.reference} ${document.folderName}`)
-  return terms.every((term) => haystack.includes(term))
-}
+const matchesQuery = (document: CatalogDocument, query: string) =>
+  matchesSearch(query, `${document.title} ${document.reference} ${document.folderName}`)
 
 export const filterDocuments = (documents: CatalogDocument[], filters: DocumentFilters) => {
   const matching = documents
