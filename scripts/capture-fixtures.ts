@@ -17,6 +17,8 @@ const PAGES = {
   'assemblies-index': '/assemblies/',
   'tickets-index': '/tickets/index',
   'tickets-add': '/tickets/add',
+  'directories-index': '/directories/index',
+  'registries-index': '/registries/index',
 }
 
 const setEcho = (enabled: boolean) => spawnSync('stty', [enabled ? 'echo' : '-echo'], { stdio: 'inherit' })
@@ -125,6 +127,28 @@ const ticketsIndex = await Bun.file(`${OUTPUT_DIR}/tickets-index.html`).text()
 const ticketIds = [...new Set([...ticketsIndex.matchAll(/TIS(\d+)/g)].map(([, id]) => id))].slice(0, 2)
 for (const [index, ticketId] of ticketIds.entries()) {
   await capture(`ticket-view-${index}`, `/tickets/view/${ticketId}`)
+}
+
+const directoriesIndex = await Bun.file(`${OUTPUT_DIR}/directories-index.html`).text()
+const directoryTabs = [...new Set([...directoriesIndex.matchAll(/\/directories\/index\/(\d+)/g)].map(([, tab]) => tab))]
+for (const tab of directoryTabs) {
+  await capture(`directories-tab-${tab}`, `/directories/index/${tab}`)
+}
+const contactIds = [...new Set([...directoriesIndex.matchAll(/id="contact-(\d+)"/g)].map(([, id]) => id))].slice(0, 2)
+for (const [index, contactId] of contactIds.entries()) {
+  await capture(`contact-view-${index}`, `/directories/view_contact/contact-${contactId}`)
+}
+const supplierIds = [...(await Bun.file(`${OUTPUT_DIR}/directories-tab-10.html`).text()).matchAll(/id="contact-(\d+)"/g)]
+if (supplierIds[0]) await capture('contact-view-supplier', `/directories/view_contact/contact-${supplierIds[0][1]}`)
+
+const registriesIndex = await Bun.file(`${OUTPUT_DIR}/registries-index.html`).text()
+const registryTabs = [...new Set([...registriesIndex.matchAll(/\/registries\/index\/(\d+)/g)].map(([, tab]) => tab))]
+for (const tab of registryTabs) {
+  await capture(`registries-tab-${tab}`, `/registries/index/${tab}`)
+}
+const registryIds = [...new Set([...registriesIndex.matchAll(/id="registry-(\d+)"/g)].map(([, id]) => id))].slice(0, 2)
+for (const [index, registryId] of registryIds.entries()) {
+  await capture(`registry-view-${index}`, `/registries/view_registry/registry-${registryId}`)
 }
 
 if (personalDocumentId) {
